@@ -1,0 +1,27 @@
+import type { Metadata } from "next";
+import "./globals.css";
+import CustomCursor from "@/components/CustomCursor";
+import SmoothEntrance from "@/components/SmoothEntrance";
+
+export const metadata: Metadata = {
+  title: "Shubham Nayak | UI/UX Designer",
+  description: "Premium UI/UX Designer portfolio showcasing high-end experiences, dynamic animations, and thoughtful product design.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <head>
+        <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=cabinet-grotesk@400,500,700&display=swap" rel="stylesheet" />
+      </head>
+      <body className="bg-background text-foreground antialiased selection:bg-accent/30">
+        <CustomCursor />
+        <SmoothEntrance>{children}</SmoothEntrance>
+      </body>
+    </html>
+  );
+}
