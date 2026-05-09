@@ -3,7 +3,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Briefcase, Download, GraduationCap, Palette } from "lucide-react";
 import dynamic from "next/dynamic";
-import NeonTubesBackdrop from "@/components/sections/resume/NeonTubesBackdrop";
 
 const TubesWebGLCanvas = dynamic(() => import("@/components/sections/resume/TubesWebGLCanvas"), { ssr: false });
 
@@ -114,9 +113,12 @@ export default function Resume() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="mt-10 text-center text-sm text-zinc-500"
+          className="mt-10 text-center text-sm leading-relaxed text-zinc-400"
         >
-          Contact details, full work history, and certifications are only in the PDF.
+          <span className="font-semibold text-[#d9ff75]">Contact details</span>,{" "}
+          <span className="font-semibold text-[#d9ff75]">full work history</span>, and{" "}
+          <span className="font-semibold text-[#d9ff75]">certifications</span> are only in the{" "}
+          <span className="font-semibold text-[#d9ff75]">PDF</span>.
         </motion.p>
       </div>
     </section>

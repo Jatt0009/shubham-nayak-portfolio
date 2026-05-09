@@ -283,8 +283,8 @@ export default function DesignProcessVideo({
             {title}
           </h2>
           <p className="mt-5 max-w-md font-body text-sm leading-relaxed text-white/50 md:text-base">
-            Scroll the strip — each frame is a chapter. The centered reel plays;
-            the rest rest on their beat.
+            Each frame is a chapter. The centered reel plays while the rest hold
+            their beat.
           </p>
         </header>
       </div>

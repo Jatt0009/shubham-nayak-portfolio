@@ -33,6 +33,7 @@ const config: Config = {
       fontFamily: {
         heading: ["Clash Display", "sans-serif"],
         body: ["Cabinet Grotesk", "sans-serif"],
+        satoshi: ["Satoshi", "system-ui", "sans-serif"],
       },
       fontSize: {
         'heading-xl': ['4rem', { lineHeight: '1.1', letterSpacing: '-0.02em' }],

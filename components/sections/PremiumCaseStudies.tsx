@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
+import type { MotionStyle } from "framer-motion";
 import { X } from "lucide-react";
 import Image from "next/image";
 import DeviceShowcase from "../case-study/DeviceShowcase";
+import EditorialCaseStudyCollage from "../case-study/EditorialCaseStudyCollage";
 import { CASE_STUDIES, type CaseStudy, type CaseStudyFloater } from "@/lib/caseStudies";
 
 const layoutEase = [0.22, 1, 0.36, 1] as const;
@@ -40,7 +42,7 @@ function RevealBlock({
 
 /** Uniform sticker size (used for all hero floaters) */
 const HERO_FLOATER_BOX =
-  "h-32 w-32 sm:h-40 sm:w-40 md:h-48 md:w-48 lg:h-[13.5rem] lg:w-[13.5rem]";
+  "h-36 w-36 sm:h-44 sm:w-44 md:h-52 md:w-52 lg:h-[15rem] lg:w-[15rem]";
 
 /** With 3 floaters: left + right stay high; center sticker is rendered in-flow below the tagline */
 const HERO_FLOATER_TOP_ROW =
@@ -68,6 +70,32 @@ function FloaterSticker({
 }) {
   const preset = FLOATER_DRIFT[index % FLOATER_DRIFT.length];
   const driftDelay = (floater.delay ?? 0) + index * 0.12;
+  const renderFloaterContent = () => {
+    if (floater.src) {
+      return (
+        <Image
+          src={floater.src}
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 220px, (min-width: 768px) 192px, 128px"
+            className="object-contain drop-shadow-[0_20px_44px_rgba(28,28,28,0.18)] [filter:drop-shadow(0_0_18px_rgba(47,143,133,0.32))]"
+          draggable={false}
+          unoptimized
+        />
+      );
+    }
+
+    return (
+      <div
+        className={`flex h-full w-full select-none flex-col items-center justify-center rounded-[2rem] border px-3 text-center shadow-[0_20px_46px_rgba(28,28,28,0.14),0_0_24px_rgba(47,143,133,0.24)] ${floater.toneClassName ?? "border-divider bg-white text-foreground"}`}
+      >
+        <span className="mb-2 text-3xl leading-none">{floater.icon ?? "✨"}</span>
+        <span className="max-w-[12ch] text-xs font-semibold leading-snug tracking-tight md:text-sm">
+          {floater.label ?? "Case highlight"}
+        </span>
+      </div>
+    );
+  };
 
   return (
     <motion.div
@@ -84,15 +112,7 @@ function FloaterSticker({
     >
       {reduceMotion ? (
         <div className="relative h-full w-full cursor-grab active:cursor-grabbing">
-          <Image
-            src={floater.src}
-            alt=""
-            fill
-            sizes="(min-width: 1024px) 220px, (min-width: 768px) 192px, 128px"
-            className="object-contain drop-shadow-[0_16px_40px_rgba(28,28,28,0.16)]"
-            draggable={false}
-            unoptimized
-          />
+          {renderFloaterContent()}
         </div>
       ) : (
         <motion.div
@@ -109,15 +129,7 @@ function FloaterSticker({
             delay: driftDelay,
           }}
         >
-          <Image
-            src={floater.src}
-            alt=""
-            fill
-            sizes="(min-width: 1024px) 220px, (min-width: 768px) 192px, 128px"
-            className="object-contain drop-shadow-[0_16px_40px_rgba(28,28,28,0.16)]"
-            draggable={false}
-            unoptimized
-          />
+          {renderFloaterContent()}
         </motion.div>
       )}
     </motion.div>
@@ -200,8 +212,151 @@ function CaseStudyBoard({ src, title }: { src: string; title: string }) {
   );
 }
 
+function ExplodedAssemblyCard({
+  project,
+  style,
+  onSelect,
+}: {
+  project: CaseStudy;
+  style: MotionStyle;
+  onSelect: (id: string) => void;
+}) {
+  const displaySrc = project.collageBackgroundSrc ?? project.showcaseSrc;
+  const imageUnoptimized = Boolean(displaySrc?.startsWith("/"));
+
+  return (
+    <motion.article
+      style={style}
+      className="absolute left-1/2 top-1/2 h-[clamp(250px,36vw,350px)] w-[min(86vw,420px)] -translate-x-1/2 -translate-y-1/2 cursor-pointer overflow-hidden rounded-[1.8rem] border border-white/15 bg-[#0b0b0b] shadow-[0_32px_90px_-36px_rgba(0,0,0,0.72)] outline-none ring-1 ring-white/10"
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(project.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(project.id);
+        }
+      }}
+      aria-label={`Open case study: ${project.title}`}
+    >
+      <div className="relative h-full w-full">
+        {displaySrc ? (
+          <Image
+            src={displaySrc}
+            alt=""
+            fill
+            sizes="(max-width: 768px) 88vw, 420px"
+            unoptimized={imageUnoptimized}
+            className={`object-cover brightness-[0.74] contrast-[1.06] ${project.collageImageClass ?? ""} ${project.imageObjectClass ?? "object-center"}`}
+          />
+        ) : (
+          <div className={`absolute inset-0 ${project.bgLight}`} />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/36 via-black/10 to-black/0" />
+      </div>
+    </motion.article>
+  );
+}
+
+function ExplodedAssembly({
+  projects,
+  onSelect,
+}: {
+  projects: CaseStudy[];
+  onSelect: (id: string) => void;
+}) {
+  const assemblyRef = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
+  const [a, b, c] = projects;
+  const { scrollYProgress } = useScroll({
+    target: assemblyRef,
+    offset: ["start 78%", "end 22%"],
+  });
+  const progress = useSpring(scrollYProgress, {
+    stiffness: 95,
+    damping: 24,
+    mass: 0.32,
+  });
+
+  const leftX = useTransform(progress, [0, 0.35, 0.72, 1], [0, -170, -240, -255]);
+  const leftY = useTransform(progress, [0, 0.35, 0.72, 1], [0, -8, -18, -20]);
+  const leftScale = useTransform(progress, [0, 0.3, 0.72, 1], [1, 0.92, 0.88, 0.88]);
+  const leftOpacity = useTransform(progress, [0, 0.08, 0.2, 1], [0, 0.25, 1, 1]);
+  const leftRotate = useTransform(progress, [0, 0.35, 1], [0, -8, -4]);
+  const leftZ = useTransform(progress, [0, 1], [30, 20]);
+
+  const midX = useTransform(progress, [0, 0.35, 0.72, 1], [0, 0, 0, 0]);
+  const midY = useTransform(progress, [0, 0.35, 0.72, 1], [0, 0, -6, -8]);
+  const midScale = useTransform(progress, [0, 0.35, 0.72, 1], [1, 1.02, 0.96, 0.96]);
+  const midOpacity = useTransform(progress, [0, 1], [1, 1]);
+  const midRotate = useTransform(progress, [0, 0.35, 1], [0, 0, 1]);
+  const midZ = useTransform(progress, [0, 0.45, 1], [40, 38, 22]);
+
+  const rightX = useTransform(progress, [0, 0.35, 0.72, 1], [0, 170, 240, 255]);
+  const rightY = useTransform(progress, [0, 0.35, 0.72, 1], [0, -8, -18, -20]);
+  const rightScale = useTransform(progress, [0, 0.3, 0.72, 1], [1, 0.92, 0.88, 0.88]);
+  const rightOpacity = useTransform(progress, [0, 0.08, 0.2, 1], [0, 0.25, 1, 1]);
+  const rightRotate = useTransform(progress, [0, 0.35, 1], [0, 8, 4]);
+  const rightZ = useTransform(progress, [0, 1], [30, 20]);
+
+  if (!a || !b || !c) return null;
+
+  return (
+    <div ref={assemblyRef} className="relative h-[190vh] w-full">
+      <div className="sticky top-[10vh] isolate h-[80vh] overflow-visible">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[1.75rem] border border-foreground/[0.1] bg-gradient-to-br from-white/75 via-background to-[#ebe6df]/95 shadow-[0_22px_70px_-28px_rgba(28,28,28,0.16)] ring-1 ring-accent/15 md:rounded-[2rem]">
+          <div className="absolute inset-0 bg-gradient-to-br from-background/85 via-[#faf8f5] to-[#f0ebe6]/95" />
+        </div>
+        <div className="absolute inset-0 z-[5] flex justify-center">
+          <div className="relative h-full w-full max-w-[1100px] pt-14 md:pt-16">
+              <ExplodedAssemblyCard
+                project={a}
+                onSelect={onSelect}
+                style={{
+                  x: leftX,
+                  y: leftY,
+                  scale: reduceMotion ? 0.84 : leftScale,
+                  opacity: reduceMotion ? 1 : leftOpacity,
+                  rotate: reduceMotion ? -4 : leftRotate,
+                  zIndex: leftZ,
+                }}
+              />
+              <ExplodedAssemblyCard
+                project={b}
+                onSelect={onSelect}
+                style={{
+                  x: midX,
+                  y: midY,
+                  scale: reduceMotion ? 0.92 : midScale,
+                  opacity: 1,
+                  rotate: reduceMotion ? 0 : midRotate,
+                  zIndex: midZ,
+                }}
+              />
+              <ExplodedAssemblyCard
+                project={c}
+                onSelect={onSelect}
+                style={{
+                  x: rightX,
+                  y: rightY,
+                  scale: reduceMotion ? 0.84 : rightScale,
+                  opacity: reduceMotion ? 1 : rightOpacity,
+                  rotate: reduceMotion ? 4 : rightRotate,
+                  zIndex: rightZ,
+                }}
+              />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PremiumCaseStudies() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const featuredProjects = CASE_STUDIES.filter((project) =>
+    ["glowup", "pawspal", "medbook"].includes(project.id),
+  );
 
   useEffect(() => {
     if (selectedId) {
@@ -217,108 +372,77 @@ export default function PremiumCaseStudies() {
   const selectedProject = CASE_STUDIES.find((p) => p.id === selectedId);
 
   return (
-    <section className="py-32 px-6 max-w-7xl mx-auto" id="projects">
-          <RevealBlock className="mb-20">
-            <h2 className="mb-6 font-heading text-5xl font-bold tracking-tight md:text-7xl">
-              Selected <br />
-              <span className="text-accent-ink">Case Studies.</span>
-            </h2>
-            <p className="max-w-2xl text-xl text-secondary">
-              A deep dive into my process, from complex problems to elegant,
-              human-centric solutions.
-            </p>
+    <section
+      className="relative w-full scroll-mt-20 overflow-hidden py-28 md:py-36"
+      id="projects"
+      aria-labelledby="case-studies-heading"
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-[min(100%,920px)] bg-[radial-gradient(ellipse_85%_55%_at_50%_-8%,rgba(182,255,0,0.16),transparent_58%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-foreground/[0.045] to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.4] [background-image:linear-gradient(rgba(28,28,28,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(28,28,28,0.045)_1px,transparent_1px)] [background-size:52px_52px]"
+        aria-hidden
+      />
+
+      <div className="relative mx-auto max-w-7xl px-6">
+        <div className="relative overflow-hidden rounded-[2rem] border border-white/14 bg-gradient-to-b from-[#0b0d0c]/98 via-[#070808]/99 to-[#030404] p-8 shadow-[0_56px_140px_-36px_rgba(0,0,0,0.82),inset_0_1px_0_rgba(255,255,255,0.1)] ring-1 ring-accent/30 backdrop-blur-md md:rounded-[2.25rem] md:p-10 lg:p-12">
+          <div
+            className="pointer-events-none absolute -inset-x-24 -top-24 h-44 rounded-full bg-accent/20 blur-[80px]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute left-6 right-6 top-0 h-[3px] rounded-b-full bg-gradient-to-r from-transparent via-accent to-transparent opacity-95 md:left-10 md:right-10"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute -right-24 top-1/2 h-[min(420px,70%)] w-[min(420px,55vw)] -translate-y-1/2 rounded-full bg-accent/[0.12] blur-[100px]"
+            aria-hidden
+          />
+
+          <RevealBlock className="relative mb-12 md:mb-14">
+            <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-10 lg:gap-14">
+              <div
+                className="hidden shrink-0 rounded-full bg-gradient-to-b from-accent via-accent to-accent-ink/35 md:block md:w-1.5 md:self-stretch md:min-h-[11rem]"
+                aria-hidden
+              />
+              <div className="min-w-0 flex-1">
+                <h2
+                  id="case-studies-heading"
+                  className="mb-5 font-heading text-5xl font-bold tracking-tight text-white md:mb-6 md:text-7xl"
+                >
+                  Selected <br />
+                  <span className="relative inline-block text-accent">
+                    Case Studies.
+                    <span className="absolute -bottom-2 left-0 h-1 w-[min(12rem,55%)] rounded-full bg-gradient-to-r from-accent to-accent/40 md:-bottom-2.5 md:h-1.5" />
+                  </span>
+                </h2>
+                <p className="max-w-2xl text-lg leading-relaxed text-white/72 md:text-xl">
+                  A deep dive into my process, from complex problems to elegant, human-centric solutions.
+                </p>
+              </div>
+            </div>
           </RevealBlock>
 
-          <div className="flex flex-col gap-12 md:gap-24">
-            {CASE_STUDIES.map((project) => (
-              <div
-                key={project.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => setSelectedId(project.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setSelectedId(project.id);
-                  }
-                }}
-                className={`group relative aspect-square w-full cursor-pointer overflow-hidden rounded-[2rem] border border-white/10 shadow-xl md:rounded-[3rem] md:aspect-[21/9] ${project.color} text-white`}
-              >
-                <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-black/85 via-black/45 to-black/10" />
-                <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-0 transition-opacity duration-700 group-hover:opacity-100">
-                  <div className="h-[120%] w-[120%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_55%)]" />
-                </div>
+          <RevealBlock className="relative" delay={0.08}>
+            <EditorialCaseStudyCollage
+              projects={featuredProjects}
+              onProjectSelect={setSelectedId}
+            />
+          </RevealBlock>
 
-                <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-8 md:p-16">
-                  <span
-                    className={`mb-4 font-mono text-sm font-bold uppercase tracking-widest md:text-base ${project.accent}`}
-                  >
-                    {project.category}
-                  </span>
-                  <div className="pointer-events-auto relative w-fit">
-                    <h3 className="relative z-10 mb-2 font-heading text-4xl font-bold tracking-tighter md:mb-4 md:text-7xl">
-                      <span className="inline-block">{project.title}</span>
-                    </h3>
-                    <p className="relative z-10 max-w-md text-xl font-light text-zinc-200 md:text-3xl">
-                      <span className="inline-block">{project.tagline}</span>
-                    </p>
-                  </div>
-                </div>
+          <p className="mt-8 text-center font-mono text-[11px] uppercase tracking-[0.28em] text-white/55 md:mt-10 md:text-xs md:tracking-[0.34em]">
+            More stories are unfolding on Behance.
+          </p>
+        </div>
+      </div>
 
-                <div className="pointer-events-none absolute inset-0 z-0 h-full w-full overflow-hidden">
-                  {project.showcaseSrc ? (
-                    <div className="relative flex h-full w-full items-center justify-center opacity-30 transition-opacity duration-700 group-hover:opacity-60">
-                      <Image
-                        src={project.showcaseSrc}
-                        alt=""
-                        fill
-                        className="scale-150 object-cover opacity-80 blur-[40px]"
-                        unoptimized
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="relative flex h-full w-full scale-[1.2] items-center justify-center transition-transform duration-[1.5s] ease-[cubic-bezier(0.16,1,0.3,1)] md:scale-[1.8] group-hover:scale-[2] group-hover:rotate-[-2deg] rotate-[-5deg]">
-                          <Image
-                            src={project.showcaseSrc}
-                            alt=""
-                            width={800}
-                            height={500}
-                            className={`absolute -translate-x-[40%] translate-y-[30%] rotate-[-15deg] rounded-3xl border border-white/10 object-cover opacity-40 blur-[2px] shadow-2xl ${project.imageObjectClass ?? "object-center"}`}
-                            unoptimized
-                          />
-                          <Image
-                            src={project.showcaseSrc}
-                            alt=""
-                            width={800}
-                            height={500}
-                            className={`absolute translate-x-[40%] -translate-y-[30%] rotate-[15deg] rounded-3xl border border-white/10 object-cover opacity-40 blur-[2px] shadow-2xl ${project.imageObjectClass ?? "object-center"}`}
-                            unoptimized
-                          />
-                          <Image
-                            src={project.showcaseSrc}
-                            alt=""
-                            width={1000}
-                            height={600}
-                            className={`relative z-10 rounded-3xl border-[4px] border-white/10 object-cover shadow-[0_0_100px_rgba(0,0,0,0.8)] ${project.imageObjectClass ?? "object-center"}`}
-                            unoptimized
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="relative flex h-full w-full items-center justify-center opacity-20">
-                      <div className={`absolute inset-0 ${project.bgLight}`} />
-                      <span className="rotate-[-10deg] text-[8rem] font-bold uppercase tracking-widest text-zinc-600 opacity-10">
-                        Preview
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-              </div>
-            ))}
-          </div>
-
-        <AnimatePresence>
+      <AnimatePresence>
           {selectedId && selectedProject && (
             <motion.div
               key={selectedProject.id}
@@ -358,7 +482,7 @@ export default function PremiumCaseStudies() {
               </motion.div>
             </motion.div>
           )}
-        </AnimatePresence>
+      </AnimatePresence>
     </section>
   );
 }

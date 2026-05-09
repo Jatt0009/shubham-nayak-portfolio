@@ -7,14 +7,23 @@ const KEY_DATA = [
   // Row 1
   { id: "home", label: "HOME", color: "bg-[#ffffff]", shadow: "#71717a", text: "text-black", span: "col-span-2", link: "/" },
   { id: "cv", label: "CV", color: "bg-[#202020]", shadow: "#000000", text: "text-zinc-50", span: "col-span-1", link: "#resume" },
-  { id: "ig", label: "IG", color: "bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888]", shadow: "#8a1230", text: "text-white", span: "col-span-1", link: "https://instagram.com/shubhm_nayak" },
+  {
+    id: "ig",
+    label: "IG",
+    color:
+      "bg-[linear-gradient(45deg,#f09433_0%,#e6683c_25%,#dc2743_50%,#cc2366_75%,#bc1888_100%)]",
+    shadow: "#7c1365",
+    text: "text-white",
+    span: "col-span-1",
+    link: "https://instagram.com/shubhm_nayak",
+  },
   
   // Row 2
-  { id: "hire", label: "HIRE ME", color: "bg-[#202020]", shadow: "#000000", text: "text-zinc-50", span: "col-span-3", link: "mailto:hello@example.com" },
+  { id: "hire", label: "HIRE ME", color: "bg-[#202020]", shadow: "#000000", text: "text-zinc-50", span: "col-span-3", link: "mailto:shubhamnayak608@gmail.com" },
   { id: "in", label: "IN", color: "bg-[#0a66c2]", shadow: "#04396c", text: "text-white", span: "col-span-1", link: "https://www.linkedin.com/in/shubham-nayak-3bb764255/" },
   
   // Row 3
-  { id: "call", label: "CALL ME", color: "bg-[#202020]", shadow: "#000000", text: "text-zinc-50", span: "col-span-2", link: "tel:+1234567890" },
+  { id: "call", label: "CALL ME", color: "bg-[#202020]", shadow: "#000000", text: "text-zinc-50", span: "col-span-2", link: "tel:+917303370652" },
   { id: "b", label: "B", color: "bg-[#B6FF00]", shadow: "#8FBF00", text: "text-black", span: "col-span-2", link: "https://www.behance.net/shubhamnayakkk" },
 ];
 
@@ -47,11 +56,43 @@ export default function KeyboardFooter() {
       <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-[120%] max-w-[1800px] h-[200px] bg-black/10 blur-[100px] pointer-events-none z-0 rounded-full" />
       <div className="absolute bottom-[10px] left-1/2 -translate-x-1/2 w-[80%] max-w-[1000px] h-[100px] bg-black/8 blur-[60px] pointer-events-none z-0 rounded-full" />
       <div className="absolute bottom-[20px] left-1/2 -translate-x-1/2 w-[50%] max-w-[600px] h-[50px] bg-white/80 blur-[40px] pointer-events-none z-0 rounded-full mix-blend-screen" />
+      {/* Keyboard-emitted underglow: source starts beneath chassis and trails downward */}
+      <div
+        className="absolute bottom-[-4px] left-1/2 z-0 h-[56px] w-[95%] max-w-[1400px] -translate-x-1/2 rounded-[999px] opacity-90 blur-[24px] pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(182,255,0,0) 0%, rgba(182,255,0,0.18) 12%, rgba(182,255,0,0.32) 50%, rgba(182,255,0,0.18) 88%, rgba(182,255,0,0) 100%)",
+        }}
+      />
+      <div
+        className="absolute bottom-[-126px] left-1/2 z-0 h-[220px] w-[95%] max-w-[1500px] -translate-x-1/2 rounded-[999px] opacity-95 blur-[84px] pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 10%, rgba(182,255,0,0.24) 0%, rgba(182,255,0,0.14) 26%, rgba(182,255,0,0.08) 46%, rgba(214,32,58,0.06) 68%, rgba(0,0,0,0) 100%)",
+        }}
+      />
       
       {/* Background Ambient Orbs for Frosted Glass Effect */}
       <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-black/10 blur-[100px] rounded-full z-10 pointer-events-none" />
       <div className="absolute top-1/2 right-1/4 translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-black/8 blur-[120px] rounded-full z-10 pointer-events-none" />
       
+      <div className="relative z-40 mb-6 w-[95%] max-w-[1400px] rounded-xl border border-black/20 bg-white px-5 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.12)]">
+        <div className="flex flex-col items-start justify-between gap-1 text-left sm:flex-row sm:items-center sm:gap-4">
+          <a
+            href="tel:+917303370652"
+            className="font-mono text-sm font-semibold tracking-wide text-black"
+          >
+            Phone: +91 7303370652
+          </a>
+          <a
+            href="mailto:shubhamnayak608@gmail.com"
+            className="font-mono text-sm font-semibold tracking-wide text-black"
+          >
+            Email: shubhamnayak608@gmail.com
+          </a>
+        </div>
+      </div>
+
       {/* 3D Tilted Dashboard Chassis (Frosted Acrylic Theme) */}
       <div 
         className="relative w-[95%] max-w-[1400px] rounded-[3rem] bg-white/80 backdrop-blur-[60px] border-t-[2px] border-white border-b-[16px] border-black/25 border-x border-black/10 shadow-[0_80px_180px_rgba(0,0,0,0.18),inset_0_4px_30px_rgba(255,255,255,0.65)] p-6 md:p-12 flex flex-col lg:flex-row gap-8 lg:gap-16 z-20 transition-transform duration-1000 ease-out"
@@ -200,6 +241,7 @@ export default function KeyboardFooter() {
         </div>
         
       </div>
+
     </footer>
   );
 }

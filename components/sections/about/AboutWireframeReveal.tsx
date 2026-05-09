@@ -18,8 +18,8 @@ const DRAW_DURATION_S = 2.35;
 /** Stagger tablets so all three don’t hit the eye at once */
 const TABLET_STAGGER_S = [0, 0.28, 0.56] as const;
 const DRAW_PHASE_END_S = TABLET_STAGGER_S[2] + DRAW_DURATION_S;
-/** Portrait begins when ~80% of the overall wireframe phase has elapsed */
-const PORTRAIT_DELAY_S = DRAW_PHASE_END_S * 0.8;
+/** Portrait begins shortly before wireframe draw phase ends (pulled 0.5s earlier for fast scrollers) */
+const PORTRAIT_DELAY_S = Math.max(0, DRAW_PHASE_END_S * 0.8 - 0.5);
 /** Gentle photo settle — no harsh pop */
 const PORTRAIT_DURATION_S = 1.35;
 

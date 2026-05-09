@@ -4,7 +4,10 @@ export type ProcessStep = {
 };
 
 export type CaseStudyFloater = {
-  src: string;
+  src?: string;
+  label?: string;
+  icon?: string;
+  toneClassName?: string;
   /** Optional Tailwind nudge on the sticker box (grid layout handles main placement) */
   className?: string;
   delay?: number;
@@ -24,6 +27,10 @@ export type CaseStudy = {
   outcome: string;
   /** Shown inside device frames + card collage */
   showcaseSrc?: string;
+  /** Optional HD thematic photo for the portfolio collage tile (preferred over showcaseSrc there) */
+  collageBackgroundSrc?: string;
+  /** Optional per-project filter tuning for collage card image */
+  collageImageClass?: string;
   /** pawspal uses different object position */
   imageObjectClass?: string;
   /** Full vertical case study PNG — shown when the modal opens (skips device collage) */
@@ -42,7 +49,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     title: "GLOWUP",
     tagline: "Personalized Skincare Journey",
     category: "UX/UI Case Study",
-    color: "from-[#0a1f18] to-[#04110e]",
+    color: "from-[#050807] via-[#030504] to-[#010202]",
     accent: "text-emerald-400",
     bgLight: "bg-emerald-500/10",
     problem:
@@ -66,6 +73,8 @@ export const CASE_STUDIES: CaseStudy[] = [
     outcome:
       "A beautifully cohesive app that drove a 40% lift in daily routine adherence and a stronger sense of community among skincare enthusiasts.",
     showcaseSrc: "/glowup-casestudy.png",
+    collageBackgroundSrc: "/glowup-card-bg.png",
+    collageImageClass: "brightness-[0.76] contrast-[1.04]",
     caseStudyBoardSrc: "/glowup-casestudy.png",
     floaters: [
       { src: "/serum.png", className: "md:translate-y-1", delay: 0 },
@@ -80,7 +89,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     title: "PawPal",
     tagline: "Making Pet Care Feel Human",
     category: "Mobile App Case Study",
-    color: "from-[#0f352b] to-[#04110e]",
+    color: "from-[#050a09] via-[#030605] to-[#010202]",
     accent: "text-[#3b998a]",
     bgLight: "bg-[#3b998a]/10",
     problem:
@@ -104,6 +113,8 @@ export const CASE_STUDIES: CaseStudy[] = [
     outcome:
       "A playful yet highly functional ecosystem that increased successful sitter matches by 75% within the first month.",
     showcaseSrc: "/pawspal-casestudy.png",
+    collageBackgroundSrc:
+      "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=2400&q=88",
     imageObjectClass: "object-[20%_center]",
     caseStudyBoardSrc: "/pawspal-casestudy.png",
     floaters: [
@@ -115,42 +126,63 @@ export const CASE_STUDIES: CaseStudy[] = [
     heroAccentMuted: "text-teal-800",
   },
   {
-    id: "aura",
-    title: "Aura",
-    tagline: "The Future of Smart Wealth",
-    category: "Fintech Platform",
-    color: "from-blue-900 to-[#0a0a0c]",
-    accent: "text-blue-400",
-    bgLight: "bg-blue-500/10",
+    id: "medbook",
+    title: "MedBook",
+    tagline: "Bridging Clinical Precision and Patient Empathy",
+    category: "Healthcare UX Case Study",
+    color: "from-[#05110f] via-[#030908] to-[#010303]",
+    accent: "text-[#2f8f85]",
+    bgLight: "bg-[#2f8f85]/10",
     problem:
-      "Traditional wealth tools overload users with jargon and dense dashboards—dropping trust and completion during high-stakes money decisions.",
+      "Patients often face unclear symptom guidance and fragmented consultation experiences, while providers need faster, more confident triage support.",
     process: [
       {
-        title: "Clarity hierarchy",
-        body: "Progressive disclosure so advanced investing never blocks the next best action for everyday users.",
+        title: "Care journey mapping",
+        body: "Mapped the end-to-end experience from symptom discovery to consultation to identify friction between patient reassurance and clinical confidence.",
       },
       {
-        title: "Confidence by design",
-        body: "Consistent components, predictable flows, and explainers that appear exactly when anxiety spikes.",
+        title: "Information architecture",
+        body: "Structured medical information into a clear hierarchy so users can quickly understand urgency, next steps, and available care paths.",
       },
       {
-        title: "Motion with purpose",
-        body: "Subtle transitions reinforce state changes—never decoration—so the product feels premium and intentional.",
+        title: "Decision support UI",
+        body: "Designed calm, high-contrast decision surfaces with concise microcopy to reduce cognitive load during high-stress health moments.",
       },
     ],
     solution:
-      "A calm financial workspace that prioritizes comprehension, reduces cognitive load, and makes complex flows feel guided.",
+      "A patient-first health platform that combines smart symptom guidance with clinically grounded interaction patterns to improve trust and actionability.",
     outcome:
-      "A streamlined dashboard that reduced task completion time by 60% and measurably improved perceived trust.",
-    heroLightBg: "from-[#f4f7fd] via-[#F8F5F2] to-[#f2f4fb]",
-    heroAccentMuted: "text-blue-900",
+      "The redesigned flow improved triage clarity and reduced decision hesitation by making care pathways easier to understand at a glance.",
+    showcaseSrc: "/doctorappointmentbooking.png",
+    collageBackgroundSrc: "/medbook-card-bg-v2.png",
+    collageImageClass: "brightness-[0.64] contrast-[1.15] saturate-[0.82]",
+    caseStudyBoardSrc: "/doctorappointmentbooking.png",
+    floaters: [
+      {
+        src: "/roo-bhta-JEeUS2RNlew-unsplash-removebg-preview.png",
+        className: "md:-translate-y-1",
+        delay: 0.02,
+      },
+      {
+        src: "/mockupbee-UEQedPdLXVU-unsplash-removebg-preview.png",
+        className: "translate-y-1",
+        delay: 0.18,
+      },
+      {
+        src: "/pexels-deise-elen-2149983761-31406902-removebg-preview.png",
+        className: "md:translate-y-1",
+        delay: 0.34,
+      },
+    ],
+    heroLightBg: "from-[#f2f9f8] via-[#F8F5F2] to-[#ecf4f3]",
+    heroAccentMuted: "text-teal-900",
   },
   {
     id: "nexus",
     title: "Nexus",
     tagline: "Unifying Enterprise Data",
     category: "Enterprise Dashboard",
-    color: "from-purple-900 to-[#0a0a0c]",
+    color: "from-[#08050c] via-[#040308] to-[#010101]",
     accent: "text-purple-400",
     bgLight: "bg-purple-500/10",
     problem:
