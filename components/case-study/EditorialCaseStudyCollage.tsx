@@ -1,11 +1,24 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { forwardRef, useEffect, useMemo, useRef } from "react";
+import type { MutableRefObject, Ref, RefCallback } from "react";
 import Image from "next/image";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import type { CaseStudy } from "@/lib/caseStudies";
 
 const layoutEase = [0.22, 1, 0.36, 1] as const;
+
+function composeRefs<T>(...refs: (Ref<T> | undefined)[]): RefCallback<T> {
+  return (node) => {
+    for (const r of refs) {
+      if (typeof r === "function") {
+        r(node);
+      } else if (r) {
+        (r as MutableRefObject<T | null>).current = node;
+      }
+    }
+  };
+}
 
 function Card({
   project,
@@ -104,16 +117,14 @@ function Card({
   );
 }
 
-export default function EditorialCaseStudyCollage({
-  projects,
-  onProjectSelect,
-}: {
+export default forwardRef<HTMLDivElement, {
   projects: CaseStudy[];
   onProjectSelect: (id: string) => void;
-}) {
+}>(function EditorialCaseStudyCollage({ projects, onProjectSelect }, ref) {
   const ordered = projects.slice(0, 4);
-  const scrollerRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const mergedScrollerRef = useMemo(() => composeRefs(scrollerRef, ref), [ref]);
   const reduceMotion = useReducedMotion();
   const isPausedRef = useRef(false);
   const inView = useInView(rootRef, { once: true, margin: "-12% 0px" });
@@ -177,7 +188,7 @@ export default function EditorialCaseStudyCollage({
         aria-hidden
       />
       <div
-        ref={scrollerRef}
+        ref={mergedScrollerRef}
         className="relative overflow-x-auto p-5 md:p-6 lg:p-8"
         onMouseEnter={() => {
           isPausedRef.current = true;
@@ -200,4 +211,4 @@ export default function EditorialCaseStudyCollage({
       </div>
     </motion.div>
   );
-}
+});

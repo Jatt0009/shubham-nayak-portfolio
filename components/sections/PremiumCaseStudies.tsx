@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
 import type { MotionStyle } from "framer-motion";
 import { X } from "lucide-react";
@@ -8,8 +9,11 @@ import Image from "next/image";
 import DeviceShowcase from "../case-study/DeviceShowcase";
 import EditorialCaseStudyCollage from "../case-study/EditorialCaseStudyCollage";
 import { CASE_STUDIES, type CaseStudy, type CaseStudyFloater } from "@/lib/caseStudies";
+import { flushScrollContainer, resetElementScrollAxes } from "@/lib/caseStudyScrollReset";
 
 const layoutEase = [0.22, 1, 0.36, 1] as const;
+const modalOverlayTransition = { duration: 0.28, ease: layoutEase };
+const modalPanelTransition = { duration: 0.36, ease: layoutEase };
 
 /** Case study hero — Apple-like ease (slow-in, confident settle) */
 const heroRevealEase = [0.16, 1, 0.3, 1] as const;
@@ -354,24 +358,117 @@ function ExplodedAssembly({
 
 export default function PremiumCaseStudies() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const collageScrollerRef = useRef<HTMLDivElement>(null);
+  const caseStudyBodyRef = useRef<HTMLDivElement | null>(null);
+  const reduceMotion = useReducedMotion();
   const featuredProjects = CASE_STUDIES.filter((project) =>
     ["glowup", "pawspal", "medbook"].includes(project.id),
   );
 
   useEffect(() => {
-    if (selectedId) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [selectedId]);
+    setMounted(true);
+  }, []);
 
+  const openCaseStudy = useCallback((id: string) => {
+    resetElementScrollAxes(collageScrollerRef.current, true, false);
+    setSelectedId(id);
+  }, []);
+
+  const closeCaseStudy = useCallback(() => {
+    setSelectedId(null);
+  }, []);
+
+  const modalOpen = selectedId !== null;
   const selectedProject = CASE_STUDIES.find((p) => p.id === selectedId);
 
+  /**
+   * Lock background scroll while the sheet is open.
+   * Prefer overflow-only lock: `position: fixed` on body often breaks hosting/Safari stacks and can blank the page.
+   */
+  useEffect(() => {
+    if (!modalOpen) return;
+    if (typeof document === "undefined") return;
+
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+
+    try {
+      html.style.overflow = "hidden";
+      body.style.overflow = "hidden";
+    } catch {
+      /* ignore */
+    }
+
+    return () => {
+      try {
+        html.style.overflow = prevHtmlOverflow;
+        body.style.overflow = prevBodyOverflow;
+      } catch {
+        /* ignore */
+      }
+    };
+  }, [modalOpen]);
+
+  const bindCaseStudyScroller = useCallback((node: HTMLDivElement | null) => {
+    caseStudyBodyRef.current = node;
+  }, []);
+
+  const overlayTransition = reduceMotion ? { duration: 0 } : modalOverlayTransition;
+  const panelTransition = reduceMotion ? { duration: 0 } : modalPanelTransition;
+  const panelInitial = reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 12 };
+  const panelAnimate = reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 };
+  const panelExit = reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 12 };
+
+  const caseStudyModal = mounted ? (
+    <AnimatePresence>
+      {selectedId && selectedProject && (
+        <motion.div
+          key={selectedProject.id}
+          role="presentation"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={overlayTransition}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/76 p-4 md:bg-black/70 md:p-6"
+          onClick={closeCaseStudy}
+        >
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`case-${selectedProject.id}-title`}
+            initial={panelInitial}
+            animate={panelAnimate}
+            exit={panelExit}
+            transition={panelTransition}
+            onAnimationComplete={() => flushScrollContainer(caseStudyBodyRef.current)}
+            className="relative w-full max-h-[min(100dvh,920px)] origin-center overflow-hidden rounded-t-[2rem] border border-black/10 bg-background shadow-[0_-24px_80px_-20px_rgba(28,28,28,0.18)] md:max-h-[min(95vh,920px)] md:w-[min(94vw,1240px)] md:rounded-[2.75rem] md:shadow-[0_40px_100px_-24px_rgba(28,28,28,0.22)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={closeCaseStudy}
+              className="absolute right-4 top-4 z-[110] flex h-12 w-12 items-center justify-center rounded-full border border-foreground/15 bg-white text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-foreground hover:text-background md:right-7 md:top-7 md:h-14 md:w-14"
+            >
+              <X className="h-6 w-6" />
+            </button>
+
+            <div
+              ref={bindCaseStudyScroller}
+              className="max-h-[88vh] overflow-x-hidden overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] md:max-h-[min(92vh,860px)]"
+            >
+              <CaseStudyDetailContent project={selectedProject} layoutEase={layoutEase} />
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  ) : null;
+
   return (
+    <>
     <section
       className="relative w-full scroll-mt-20 overflow-hidden py-28 md:py-36"
       id="projects"
@@ -431,8 +528,9 @@ export default function PremiumCaseStudies() {
 
           <RevealBlock className="relative" delay={0.08}>
             <EditorialCaseStudyCollage
+              ref={collageScrollerRef}
               projects={featuredProjects}
-              onProjectSelect={setSelectedId}
+              onProjectSelect={openCaseStudy}
             />
           </RevealBlock>
 
@@ -441,49 +539,9 @@ export default function PremiumCaseStudies() {
           </p>
         </div>
       </div>
-
-      <AnimatePresence>
-          {selectedId && selectedProject && (
-            <motion.div
-              key={selectedProject.id}
-              role="presentation"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/76 md:items-center md:bg-black/70 md:p-6 md:pb-10"
-              onClick={() => setSelectedId(null)}
-            >
-              <motion.div
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={`case-${selectedProject.id}-title`}
-                initial={{ opacity: 0, y: 48, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  duration: 0.38,
-                  ease: [0.25, 0.46, 0.45, 0.94],
-                  opacity: { duration: 0.32 },
-                }}
-                className="relative flex max-h-[min(100dvh,920px)] w-full origin-bottom flex-col overflow-hidden rounded-t-[2rem] border border-black/10 bg-background shadow-[0_-24px_80px_-20px_rgba(28,28,28,0.18)] md:max-h-[min(95vh,920px)] md:w-[min(94vw,1240px)] md:origin-center md:rounded-[2.75rem] md:shadow-[0_40px_100px_-24px_rgba(28,28,28,0.22)]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(null)}
-                  className="absolute right-4 top-4 z-[110] flex h-12 w-12 items-center justify-center rounded-full border border-foreground/15 bg-white text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-foreground hover:text-background md:right-7 md:top-7 md:h-14 md:w-14"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-
-                <div className="overflow-x-hidden overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
-                  <CaseStudyDetailContent project={selectedProject} layoutEase={layoutEase} />
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-      </AnimatePresence>
     </section>
+    {mounted && typeof document !== "undefined" ? createPortal(caseStudyModal, document.body) : null}
+    </>
   );
 }
 
